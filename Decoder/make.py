@@ -3,40 +3,46 @@
 import os, sys, re, json, shutil
 from subprocess import Popen, PIPE, STDOUT
 
+import logging
+
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+
 exec(open(os.path.expanduser('~/.emscripten'), 'r').read())
 
 sys.path.append(EMSCRIPTEN_ROOT)
-import tools.shared as emscripten
+import tools.building as emscripten
 
 emcc_args = [
   #'-m32',
   '-O3',
   #'-Dxxx2yyy'
   '--memory-init-file', '1',
-  '--llvm-opts', '3',
-  '--llvm-lto', '3',
+  # '--llvm-opts', '3',
+  # '--llvm-lto', '3',
+  # '-Wl,-lto-O3',
+  '-flto',
   '-s', 'NO_EXIT_RUNTIME=1',
   '-s', 'NO_FILESYSTEM=1',
-  '-s', 'NO_BROWSER=1',
+  # '-s', 'NO_BROWSER=1',
   
   #'-s', 'CORRECT_SIGNS=1',
   #'-s', 'CORRECT_OVERFLOWS=1',
   '-s', 'TOTAL_MEMORY=' + str(50*1024*1024),
   #'-s', 'FAST_MEMORY=' + str(50*1024*1024),
-  #'-s', 'ALLOW_MEMORY_GROWTH=0',
+  # '-s', 'ALLOW_MEMORY_GROWTH=0',
   '-s', 'INVOKE_RUN=0',
   #'-s', 'RELOOP=1',
   #'-s', 'INLINING_LIMIT=50',
   #'-s', 'OUTLINING_LIMIT=100',
   '-s', 'DOUBLE_MODE=0',
-  '-s', 'PRECISE_I64_MATH=0',
+  # '-s', 'PRECISE_I64_MATH=0',
   #'-s', 'SIMD=1',
   '-s', 'AGGRESSIVE_VARIABLE_ELIMINATION=1',
   '-s', 'ALIASING_FUNCTION_POINTERS=1',
   '-s', 'DISABLE_EXCEPTION_CATCHING=1',
   #'-s', 'USE_CLOSURE_COMPILER=1',
   #'-s', 'FORCE_ALIGNED_MEMORY=1', #why doesnt this work?
-  '-s', '''EXPORTED_FUNCTIONS=["HEAP8", "HEAP16", "HEAP32", "_broadwayGetMajorVersion", "_broadwayGetMinorVersion", "_broadwayInit", "_broadwayExit", "_broadwayCreateStream", "_broadwayPlayStream", "_broadwayOnHeadersDecoded", "_broadwayOnPictureDecoded"]''',
+  '-s', '''EXPORTED_FUNCTIONS=["_broadwayGetMajorVersion", "_broadwayGetMinorVersion", "_broadwayInit", "_broadwayExit", "_broadwayCreateStream", "_broadwayPlayStream", "_broadwayOnHeadersDecoded", "_broadwayOnPictureDecoded"]''',
   #'--closure', '1',
   '--js-library', 'library.js'
 ]
@@ -83,17 +89,19 @@ source_files = [
   'Decoder.c']
 
 for file in source_files:
-  target = file.replace('.c', '.o')
+  target = file.replace('.c', '.bc')
   print 'emcc %s -> %s' % (file, target)
-  emscripten.Building.emcc(os.path.join('src', file), emcc_args + ['-Isrc', '-Iinc'], os.path.join('obj', target))
+  emscripten.emcc(os.path.join('src', file), emcc_args + ['-Isrc', '-Iinc', '-c'], os.path.join('obj', target))
   
-object_files = [os.path.join('obj', x.replace('.c', '.o')) for x in source_files];
+object_files = [os.path.join('obj', x.replace('.c', '.bc')) for x in source_files];
 
-print 'link -> %s' % 'avc.bc'
-emscripten.Building.link(object_files, 'avc.bc')
+AR_TARGET = 'avc.bc'
 
-print 'emcc %s -> %s' % ('avc.bc', os.path.join(JS_DIR, 'avc.js'))
-emscripten.Building.emcc('avc.bc', emcc_args, os.path.join(JS_DIR, 'avc.js'))
+print 'link %s -> %s' % (object_files, AR_TARGET)
+emscripten.link(object_files, AR_TARGET)
+
+print 'emcc %s -> %s' % (AR_TARGET, os.path.join(JS_DIR, 'avc.js'))
+emscripten.emcc(AR_TARGET, emcc_args, os.path.join(JS_DIR, 'avc.js'))
 
 print 'copying %s -> %s' % (os.path.join(JS_DIR, 'avc.js'), os.path.join('..','Player','avc-codec.js'))
 
