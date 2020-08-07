@@ -1,5 +1,4 @@
 Decoder/obj
 *.wasm
 *.bc
-Player/Decoder.js
 Decoder/js
