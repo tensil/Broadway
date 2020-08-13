@@ -100,7 +100,6 @@
     this.onDecoderReady = function(){};
     
     var bufferedCalls = [];
-    console.log("Decoder.decode()");
     this.decode = function decode(typedAr, parInfo, copyDoneFun) {
       bufferedCalls.push([typedAr, parInfo, copyDoneFun]);
     };
