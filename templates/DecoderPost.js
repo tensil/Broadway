@@ -134,8 +134,6 @@
      * function overwrites stream buffer allocated by the codec with the supplied buffer.
      */
 
-      var sliceNum = 0;
-
       instance.decode = function decode(typedAr, parInfo) {
         // console.info("Decoding: " + buffer.length);
         // collect infos
@@ -178,11 +176,6 @@
     var isWorker = false;
     var decoder;
     var reuseMemory = false;
-    var sliceMode = false;
-    var sliceNum = 0;
-    var sliceCnt = 0;
-    var lastSliceNum = 0;
-    var sliceInfoAr;
     var lastBuf;
     var awaiting = 0;
     var pile = [];
@@ -203,59 +196,7 @@
       };
       return new ArrayBuffer(length);
     }; 
-    
-    var copySlice = function(source, target, infoAr, width, height){
-      
-      var length = width * height;
-      var length4 = length / 4
-      var plane2 = length;
-      var plane3 = length + length4;
-      
-      var copy16 = function(parBegin, parEnd){
-        var i = 0;
-        for (i = 0; i < 16; ++i){
-          var begin = parBegin + (width * i);
-          var end = parEnd + (width * i)
-          target.set(source.subarray(begin, end), begin);
-        };
-      };
-      var copy8 = function(parBegin, parEnd){
-        var i = 0;
-        for (i = 0; i < 8; ++i){
-          var begin = parBegin + ((width / 2) * i);
-          var end = parEnd + ((width / 2) * i)
-          target.set(source.subarray(begin, end), begin);
-        };
-      };
-      var copyChunk = function(begin, end){
-        target.set(source.subarray(begin, end), begin);
-      };
-      
-      var begin = infoAr[0];
-      var end = infoAr[1];
-      if (end > 0){
-        copy16(begin, end);
-        copy8(infoAr[2], infoAr[3]);
-        copy8(infoAr[4], infoAr[5]);
-      };
-      begin = infoAr[6];
-      end = infoAr[7];
-      if (end > 0){
-        copy16(begin, end);
-        copy8(infoAr[8], infoAr[9]);
-        copy8(infoAr[10], infoAr[11]);
-      };
-      
-      begin = infoAr[12];
-      end = infoAr[15];
-      if (end > 0){
-        copyChunk(begin, end);
-        copyChunk(infoAr[13], infoAr[16]);
-        copyChunk(infoAr[14], infoAr[17]);
-      };
-      
-    };
-        
+            
     self.addEventListener('message', function(e) {
       
       if (isWorker){
@@ -265,51 +206,10 @@
           };
         };
         if (e.data.buf){
-          if (sliceMode && awaiting !== 0){
-            pile.push(e.data);
-          }else{
-            decoder.decode(
-              new Uint8Array(e.data.buf, e.data.offset || 0, e.data.length), 
-              e.data.info, 
-              function(){
-                if (sliceMode && sliceNum !== lastSliceNum){
-                  postMessage(e.data, [e.data.buf]);
-                };
-              }
-            );
-          };
-          return;
-        };
-        
-        if (e.data.slice){
-          // update ref pic
-          var copyStart = nowValue();
-          copySlice(new Uint8Array(e.data.slice), lastBuf, e.data.infos[0].sliceInfoAr, e.data.width, e.data.height);
-          // is it the one? then we need to update it
-          if (e.data.theOne){
-            copySlice(lastBuf, new Uint8Array(e.data.slice), sliceInfoAr, e.data.width, e.data.height);
-            if (timeDecoding > e.data.infos[0].timeDecoding){
-              e.data.infos[0].timeDecoding = timeDecoding;
-            };
-            e.data.infos[0].timeCopy += (nowValue() - copyStart);
-          };
-          // move on
-          postMessage(e.data, [e.data.slice]);
-          
-          // next frame in the pipe?
-          awaiting -= 1;
-          if (awaiting === 0 && pile.length){
-            var data = pile.shift();
-            decoder.decode(
-              new Uint8Array(data.buf, data.offset || 0, data.length), 
-              data.info, 
-              function(){
-                if (sliceMode && sliceNum !== lastSliceNum){
-                  postMessage(data, [data.buf]);
-                };
-              }
-            );
-          };
+          decoder.decode(
+            new Uint8Array(e.data.buf, e.data.offset || 0, e.data.length), 
+            e.data.info
+          );
           return;
         };
                 

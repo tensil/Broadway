@@ -43,12 +43,7 @@ p.decode(<binary>);
   var Player = function(parOptions){
     var self = this;
     this._config = parOptions || {};
-    
-    this.render = true;
-    if (this._config.render === false){
-      this.render = false;
-    };
-    
+        
     this.nowValue = nowValue;
     
     this._config.workerFile = this._config.workerFile || "Decoder.js";
@@ -71,7 +66,7 @@ p.decode(<binary>);
       
       var startTime = nowValue();
       
-      if (!buffer || !self.render) {
+      if (!buffer) {
         return;
       };
       
@@ -161,14 +156,10 @@ p.decode(<binary>);
       
     };
     
-    
-    
-    if (this.render){
-      this.canvasObj = this.createCanvasObj({
-        contextOptions: this._config.contextOptions
-      });
-      this.canvas = this.canvasObj.canvas;
-    };
+    this.canvasObj = this.createCanvasObj({
+      contextOptions: this._config.contextOptions
+    });
+    this.canvas = this.canvasObj.canvas;
 
     this.domNode = this.canvas;
     
