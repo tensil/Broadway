@@ -175,7 +175,6 @@
   if (typeof self != "undefined"){
     var isWorker = false;
     var decoder;
-    var reuseMemory = false;
     var lastBuf;
     var awaiting = 0;
     var pile = [];
@@ -200,10 +199,8 @@
     self.addEventListener('message', function(e) {
       
       if (isWorker){
-        if (reuseMemory){
-          if (e.data.reuse){
-            memAr.push(e.data.reuse);
-          };
+        if (e.data.reuse){
+          memAr.push(e.data.reuse);
         };
         if (e.data.buf){
           decoder.decode(
@@ -218,44 +215,23 @@
           isWorker = true;
           decoder = new Decoder(e.data.options);
                            
-          if (e.data.options.reuseMemory){
-            reuseMemory = true;
-            decoder.onPictureDecoded = function (buffer, width, height, infos) {
-              
-              // buffer needs to be copied because we give up ownership
-              var copyU8 = new Uint8Array(getMem(buffer.length));
-              copyU8.set( buffer, 0, buffer.length );
 
-              postMessage({
-                buf: copyU8.buffer, 
-                length: buffer.length,
-                width: width, 
-                height: height, 
-                infos: infos
-              }, [copyU8.buffer]); // 2nd parameter is used to indicate transfer of ownership
-
-            };
+          decoder.onPictureDecoded = function (buffer, width, height, infos) {
             
-          }else{
-            decoder.onPictureDecoded = function (buffer, width, height, infos) {
-              if (buffer) {
-                buffer = new Uint8Array(buffer);
-              };
+            // buffer needs to be copied because we give up ownership
+            var copyU8 = new Uint8Array(getMem(buffer.length));
+            copyU8.set( buffer, 0, buffer.length );
 
-              // buffer needs to be copied because we give up ownership
-              var copyU8 = new Uint8Array(buffer.length);
-              copyU8.set( buffer, 0, buffer.length );
+            postMessage({
+              buf: copyU8.buffer, 
+              length: buffer.length,
+              width: width, 
+              height: height, 
+              infos: infos
+            }, [copyU8.buffer]); // 2nd parameter is used to indicate transfer of ownership
 
-              postMessage({
-                buf: copyU8.buffer, 
-                length: buffer.length,
-                width: width, 
-                height: height, 
-                infos: infos
-              }, [copyU8.buffer]); // 2nd parameter is used to indicate transfer of ownership
-
-            };
           };
+            
           postMessage({ consoleLog: "broadway worker initialized" });
         };
       };

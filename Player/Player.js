@@ -113,7 +113,6 @@ p.decode(<binary>);
       
       worker.postMessage({type: "Broadway.js - Worker init", options: {
         memsize: this.memsize,
-        reuseMemory: this._config.reuseMemory ? true : false
       }});
       
       if (this._config.transferMemory){
@@ -136,13 +135,11 @@ p.decode(<binary>);
         
       };
       
-      if (this._config.reuseMemory){
-        this.recycleMemory = function(parArray){
-          //this.beforeRecycle();
-          worker.postMessage({reuse: parArray.buffer}, [parArray.buffer]); // Send data to our worker.
-          //this.afterRecycle();
-        };
-      }
+      this.recycleMemory = function(parArray){
+        //this.beforeRecycle();
+        worker.postMessage({reuse: parArray.buffer}, [parArray.buffer]); // Send data to our worker.
+        //this.afterRecycle();
+      };
       
     }else{
       
