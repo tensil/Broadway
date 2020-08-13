@@ -61,8 +61,8 @@ p.decode(<binary>);
         
     var lastWidth;
     var lastHeight;
-    var onPictureDecoded = function(buffer, width, height, infos) {
-      self.onPictureDecoded(buffer, width, height, infos);
+    var onPictureDecoded = function(buffer, width, height) {
+      self.onPictureDecoded(buffer, width, height);
       
       var startTime = nowValue();
       
@@ -82,7 +82,6 @@ p.decode(<binary>);
           data: buffer,
           width: width,
           height: height,
-          infos: infos,
           canvasObj: self.canvasObj
         });
       };
@@ -107,7 +106,7 @@ p.decode(<binary>);
           return;
         };
         
-        onPictureDecoded.call(self, new Uint8Array(data.buf, 0, data.length), data.width, data.height, data.infos);
+        onPictureDecoded.call(self, new Uint8Array(data.buf, 0, data.length), data.width, data.height);
         
       }, false);
       
@@ -115,12 +114,12 @@ p.decode(<binary>);
         memsize: this.memsize,
       }});
       
-      this.decode = function(parData, parInfo){
+      this.decode = function(parData){
         // Copy the sample so that we only do a structured clone of the
         // region of interest
         var copyU8 = new Uint8Array(parData.length);
         copyU8.set( parData, 0, parData.length );
-        worker.postMessage({buf: copyU8.buffer, offset: 0, length: parData.length, info: parInfo}, [copyU8.buffer]); // Send data to our worker.
+        worker.postMessage({buf: copyU8.buffer, offset: 0, length: parData.length}, [copyU8.buffer]); // Send data to our worker.
       };
         
       this.recycleMemory = function(parArray){
@@ -135,8 +134,8 @@ p.decode(<binary>);
       });
       this.decoder.onPictureDecoded = onPictureDecoded;
 
-      this.decode = function(parData, parInfo){
-        self.decoder.decode(parData, parInfo);
+      this.decode = function(parData){
+        self.decoder.decode(parData);
       };
       
     };
@@ -155,7 +154,7 @@ p.decode(<binary>);
   
   Player.prototype = {
     
-    onPictureDecoded: function(buffer, width, height, infos){},
+    onPictureDecoded: function(buffer, width, height){},
     
     // call when memory of decoded frames is not used anymore
     recycleMemory: function(buf){

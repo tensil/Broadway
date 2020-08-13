@@ -71,18 +71,7 @@
         buffer = this.pictureBuffers[$buffer] = toU8Array($buffer, (width * height * 3) / 2);
       };
       
-      var infos;
-      var doInfo = false;
-      if (this.infoAr.length){
-        doInfo = true;
-        infos = this.infoAr;
-      };
-      this.infoAr = [];
-      
-      if (doInfo){
-        infos[0].finishDecoding = nowValue();
-      };
-      this.onPictureDecoded(buffer, width, height, infos);
+      this.onPictureDecoded(buffer, width, height);
     }.bind(this);
     
     var ignore = false;
@@ -93,22 +82,19 @@
     var MAX_STREAM_BUFFER_LENGTH = 1024 * 1024;
     
     var instance = this;
-    this.onPictureDecoded = function (buffer, width, height, infos) {
+    this.onPictureDecoded = function (buffer, width, height) {
 
     };
     
     this.onDecoderReady = function(){};
     
     var bufferedCalls = [];
-    this.decode = function decode(typedAr, parInfo, copyDoneFun) {
-      bufferedCalls.push([typedAr, parInfo, copyDoneFun]);
+    this.decode = function decode(typedAr) {
+      bufferedCalls.push([typedAr]);
     };
     
     ModuleCallback(function(Module){
-      var HEAP8 = Module.HEAP8;
       var HEAPU8 = Module.HEAPU8;
-      var HEAP16 = Module.HEAP16;
-      var HEAP32 = Module.HEAP32;
       // from old constructor
       Module._broadwayInit();
       
@@ -124,8 +110,6 @@
       };
       instance.streamBuffer = toU8Array(Module._broadwayCreateStream(MAX_STREAM_BUFFER_LENGTH), MAX_STREAM_BUFFER_LENGTH);
       instance.pictureBuffers = {};
-      // collect extra infos that are provided with the nal units
-      instance.infoAr = [];
 
       /**
      * Decodes a stream buffer. This may be one single (unframed) NAL unit without the
@@ -133,13 +117,8 @@
      * function overwrites stream buffer allocated by the codec with the supplied buffer.
      */
 
-      instance.decode = function decode(typedAr, parInfo) {
+      instance.decode = function decode(typedAr) {
         // console.info("Decoding: " + buffer.length);
-        // collect infos
-        if (parInfo){
-          instance.infoAr.push(parInfo);
-          parInfo.startDecoding = nowValue();
-        };
 
         instance.streamBuffer.set(typedAr);
         Module._broadwayPlayStream(typedAr.length);
@@ -148,7 +127,7 @@
       if (bufferedCalls.length){
         var bi = 0;
         for (bi = 0; bi < bufferedCalls.length; ++bi){
-          instance.decode(bufferedCalls[bi][0], bufferedCalls[bi][1], bufferedCalls[bi][2]);
+          instance.decode(bufferedCalls[bi][0]);
         };
         bufferedCalls = [];
       };
@@ -203,8 +182,7 @@
         };
         if (e.data.buf){
           decoder.decode(
-            new Uint8Array(e.data.buf, e.data.offset || 0, e.data.length), 
-            e.data.info
+            new Uint8Array(e.data.buf, e.data.offset || 0, e.data.length)
           );
           return;
         };
@@ -215,7 +193,7 @@
           decoder = new Decoder(e.data.options);
                            
 
-          decoder.onPictureDecoded = function (buffer, width, height, infos) {
+          decoder.onPictureDecoded = function (buffer, width, height) {
             
             // buffer needs to be copied because we give up ownership
             var copyU8 = new Uint8Array(getMem(buffer.length));
@@ -225,8 +203,7 @@
               buf: copyU8.buffer, 
               length: buffer.length,
               width: width, 
-              height: height, 
-              infos: infos
+              height: height
             }, [copyU8.buffer]); // 2nd parameter is used to indicate transfer of ownership
 
           };
