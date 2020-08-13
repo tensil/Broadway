@@ -115,26 +115,14 @@ p.decode(<binary>);
         memsize: this.memsize,
       }});
       
-      if (this._config.transferMemory){
-        this.decode = function(parData, parInfo){
-          // no copy
-          // instead we are transfering the ownership of the buffer
-          // dangerous!!!
-          
-          worker.postMessage({buf: parData.buffer, offset: parData.byteOffset, length: parData.length, info: parInfo}, [parData.buffer]); // Send data to our worker.
-        };
-        
-      }else{
-        this.decode = function(parData, parInfo){
-          // Copy the sample so that we only do a structured clone of the
-          // region of interest
-          var copyU8 = new Uint8Array(parData.length);
-          copyU8.set( parData, 0, parData.length );
-          worker.postMessage({buf: copyU8.buffer, offset: 0, length: parData.length, info: parInfo}, [copyU8.buffer]); // Send data to our worker.
-        };
-        
+      this.decode = function(parData, parInfo){
+        // Copy the sample so that we only do a structured clone of the
+        // region of interest
+        var copyU8 = new Uint8Array(parData.length);
+        copyU8.set( parData, 0, parData.length );
+        worker.postMessage({buf: copyU8.buffer, offset: 0, length: parData.length, info: parInfo}, [copyU8.buffer]); // Send data to our worker.
       };
-      
+        
       this.recycleMemory = function(parArray){
         //this.beforeRecycle();
         worker.postMessage({reuse: parArray.buffer}, [parArray.buffer]); // Send data to our worker.
