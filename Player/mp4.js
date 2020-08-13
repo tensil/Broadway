@@ -763,11 +763,9 @@ var MP4Player = (function reader() {
     getBoundaryStrengthsA: "optimized"
   };
 
-  function constructor(stream, useWorkers, webgl, render) {
+  function constructor(stream, useWorkers) {
     this.stream = stream;
     this.useWorkers = useWorkers;
-    this.webgl = webgl;
-    this.render = render;
 
     this.statistics = {
       videoStartTime: 0,
@@ -785,15 +783,12 @@ var MP4Player = (function reader() {
     this.avc = new Player({
       useWorker: useWorkers,
       reuseMemory: true,
-      webgl: webgl,
       size: {
         width: 640,
         height: 368
       }
     });
-    
-    this.webgl = this.avc.webgl;
-    
+        
     var self = this;
     this.avc.onPictureDecoded = function(){
       updateStatistics.call(self);
@@ -867,11 +862,15 @@ var MP4Player = (function reader() {
       this.avc.decode(sps);
       this.avc.decode(pps);
 
+      console.log("hello??");
+
       /* Decode Pictures */
       var pic = 0;
       setTimeout(function foo() {
         var avc = this.avc;
         video.getSampleNALUnits(pic).forEach(function (nal) {
+          // console.log("nal#", pic, ", size=", nal.length, nal.subarray(0, 7));
+
           avc.decode(nal);
         });
         pic ++;
@@ -899,18 +898,7 @@ var Broadway = (function broadway() {
     div.appendChild(controls);
     
     var useWorkers = div.attributes.workers ? div.attributes.workers.value == "true" : false;
-    var render = div.attributes.render ? div.attributes.render.value == "true" : false;
-    
-    var webgl = "auto";
-    if (div.attributes.webgl){
-      if (div.attributes.webgl.value == "true"){
-        webgl = true;
-      };
-      if (div.attributes.webgl.value == "false"){
-        webgl = false;
-      };
-    };
-    
+        
     var infoStrPre = "Click canvas to load and play - ";
     var infoStr = "";
     if (useWorkers){
@@ -919,16 +907,14 @@ var Broadway = (function broadway() {
       infoStr += "main thread ";
     };
 
-    this.player = new MP4Player(new Stream(src), useWorkers, webgl, render);
+    this.player = new MP4Player(new Stream(src), useWorkers);
     this.canvas = this.player.canvas;
     this.canvas.onclick = function () {
       this.play();
     }.bind(this);
     div.appendChild(this.canvas);
     
-    
-    infoStr += " - webgl: " + this.player.webgl;
-    this.info.innerHTML = infoStrPre + infoStr;
+        this.info.innerHTML = infoStrPre + infoStr;
     
 
     this.score = null;

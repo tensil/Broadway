@@ -6,14 +6,11 @@ usage:
 p = new Player({
   useWorker: <bool>,
   workerFile: <defaults to "Decoder.js"> // give path to Decoder.js
-  webgl: true | false | "auto" // defaults to "auto"
 });
 
 // canvas property represents the canvas node
 // put it somewhere in the dom
 p.canvas;
-
-p.webgl; // contains the used rendering mode. if you pass auto to webgl you can see what auto detection resulted in
 
 p.decode(<binary>);
 
@@ -59,45 +56,14 @@ p.decode(<binary>);
       this._config.contextOptions = this._config.contextOptions || {};
       this._config.contextOptions.preserveDrawingBuffer = true;
     };
-    
-    var webgl = "auto";
-    if (this._config.webgl === true){
-      webgl = true;
-    }else if (this._config.webgl === false){
-      webgl = false;
-    };
-    
-    if (webgl == "auto"){
-      webgl = true;
-      try{
-        if (!window.WebGLRenderingContext) {
-          // the browser doesn't even know what WebGL is
-          webgl = false;
-        } else {
-          var canvas = document.createElement('canvas');
-          var ctx = canvas.getContext("webgl");
-          if (!ctx) {
-            // browser supports WebGL but initialization failed.
-            webgl = false;
-          };
-        };
-      }catch(e){
-        webgl = false;
-      };
-    };
-    
-    this.webgl = webgl;
-    
+        
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext("webgl");
+       
     // choose functions
-    if (this.webgl){
-      this.createCanvasObj = this.createCanvasWebGL;
-      this.renderFrame = this.renderFrameWebGL;
-    }else{
-      this.createCanvasObj = this.createCanvasRGB;
-      this.renderFrame = this.renderFrameRGB;
-    };
-    
-    
+    this.createCanvasObj = this.createCanvasWebGL;
+    this.renderFrame = this.renderFrameWebGL;
+        
     var lastWidth;
     var lastHeight;
     var onPictureDecoded = function(buffer, width, height, infos) {
@@ -151,7 +117,6 @@ p.decode(<binary>);
       }, false);
       
       worker.postMessage({type: "Broadway.js - Worker init", options: {
-        rgb: !webgl,
         memsize: this.memsize,
         reuseMemory: this._config.reuseMemory ? true : false
       }});
@@ -187,7 +152,6 @@ p.decode(<binary>);
     }else{
       
       this.decoder = new Decoder({
-        rgb: !webgl
       });
       this.decoder.onPictureDecoded = onPictureDecoded;
 

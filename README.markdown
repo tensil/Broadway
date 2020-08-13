@@ -61,9 +61,6 @@ decode in a worker thread
 workerFile <string>  
 path to Decoder.js. Only neccessary when using worker. defaults to "Decoder.js"  
 
-webgl true / "auto" / false  
-use webgl. defaults to "auto"  
-
 size { width: <num>, height: <num> }  
 initial size of the canvas. canvas will resize after video starts streaming.  
 
@@ -94,9 +91,6 @@ p.decode(<h264 data>);
 ```
 
 ## options:  
-
-rgb true / false  
-if true will convert the image to rgb. sligtly slower.  
 
 ## properties:  
 

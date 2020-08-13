@@ -10,7 +10,7 @@ logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 exec(open(os.path.expanduser('~/.emscripten'), 'r').read())
 
 sys.path.append(EMSCRIPTEN_ROOT)
-import tools.building as emscripten
+import tools.shared as emscripten
 
 emcc_args = [
   #'-m32',
@@ -91,17 +91,17 @@ source_files = [
 for file in source_files:
   target = file.replace('.c', '.bc')
   print 'emcc %s -> %s' % (file, target)
-  emscripten.emcc(os.path.join('src', file), emcc_args + ['-Isrc', '-Iinc', '-c'], os.path.join('obj', target))
+  emscripten.Building.emcc(os.path.join('src', file), emcc_args + ['-Isrc', '-Iinc', '-c'], os.path.join('obj', target))
   
 object_files = [os.path.join('obj', x.replace('.c', '.bc')) for x in source_files];
 
 AR_TARGET = 'avc.bc'
 
 print 'link %s -> %s' % (object_files, AR_TARGET)
-emscripten.link(object_files, AR_TARGET)
+emscripten.Building.link(object_files, AR_TARGET)
 
 print 'emcc %s -> %s' % (AR_TARGET, os.path.join(JS_DIR, 'avc.js'))
-emscripten.emcc(AR_TARGET, emcc_args, os.path.join(JS_DIR, 'avc.js'))
+emscripten.Building.emcc(AR_TARGET, emcc_args, os.path.join(JS_DIR, 'avc.js'))
 
 print 'copying %s -> %s' % (os.path.join(JS_DIR, 'avc.js'), os.path.join('..','Player','avc-codec.js'))
 
