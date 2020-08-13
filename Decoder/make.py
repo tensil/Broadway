@@ -44,6 +44,8 @@ emcc_args = [
   #'-s', 'FORCE_ALIGNED_MEMORY=1', #why doesnt this work?
   '-s', '''EXPORTED_FUNCTIONS=["_broadwayGetMajorVersion", "_broadwayGetMinorVersion", "_broadwayInit", "_broadwayExit", "_broadwayCreateStream", "_broadwayPlayStream", "_broadwayOnHeadersDecoded", "_broadwayOnPictureDecoded"]''',
   #'--closure', '1',
+  '-D_DEBUG_PRINT',
+  '-D_ERROR_PRINT',
   '--js-library', 'library.js'
 ]
   

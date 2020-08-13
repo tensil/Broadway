@@ -338,7 +338,7 @@ void H264SwDecRelease(H264SwDecInst decInst)
 H264SwDecRet H264SwDecDecode(H264SwDecInst decInst, H264SwDecInput *pInput,
                   H264SwDecOutput *pOutput)
 {
-
+    // DEBUG(("H264SwDecDecode: called\n"));
     decContainer_t *pDecCont;
     u32 strmLen;
     u32 numReadBytes;

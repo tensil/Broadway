@@ -42,13 +42,14 @@ void streamInit(Stream *stream, u32 length) {
 }
 
 void playStream(Stream *stream) {
+    // DEBUG(("playStream: called\n"));
     decInput.pStream = stream->buffer;
     decInput.dataLen = stream->length;
     u32 i = 0;
     do {
         u8 *start = decInput.pStream;
         u32 ret = broadwayDecode();
-        // printf("Decoded Unit #%d, Size: %d, Result: %d\n", i++, (decInput.pStream - start), ret);
+        // DEBUG(("Decoded Unit #%d, Size: %d, Result: %d\n", i++, (decInput.pStream - start), ret));
     } while (decInput.dataLen > 0);
 }
 
@@ -99,6 +100,8 @@ extern void broadwayOnPictureDecoded(u8 *buffer, u32 width, u32 height);
 
 u32 broadwayDecode() {
     decInput.picId = picDecodeNumber;
+
+    // DEBUG(("broadwayDecode: decInput.picId=%d decInput.dataLen=%d\n", decInput.picId, decInput.dataLen));
 
     H264SwDecRet ret = H264SwDecDecode(decInst, &decInput, &decOutput);
 
